@@ -30,9 +30,19 @@ class GenStreamflowFile:
             if response.status_code == 200:
                 data = response.json()
                 if 'timeSeries' in data['value']:
-                    records = data['value']['timeSeries'][0]['values'][0]['value']
+                    time_series = data['value']['timeSeries'][0]
+                    variable_info = time_series['variable']
+                    unit = variable_info.get('unit', {}).get('unitCode', None)
+                    parameter_units = variable_info.get('variableDescription', None)
+
+                    records = time_series['values'][0]['value']
                     flow_data = pd.DataFrame(records)
                     flow_data['value'] = pd.to_numeric(flow_data['value'], errors='coerce')
+
+                    # Convert flow data to cms if the unit is cfs
+                    if unit == 'ft3/s' or parameter_units == 'Cubic Feet per Second':
+                        flow_data['value'] = flow_data['value'] * 0.0283168
+                    
                     flow_data['dateTime'] = pd.to_datetime(flow_data['dateTime']).dt.date.astype(str)
 
                     start_time_loop = time.time()
@@ -43,13 +53,15 @@ class GenStreamflowFile:
                     end_time_loop = time.time()
                     print(f"Time taken in the for loop for station {station}: {end_time_loop - start_time_loop} seconds")
                     
-                    site_info = data['value']['timeSeries'][0]['sourceInfo']
+                    site_info = time_series['sourceInfo']
                     station_info.append({
                         'Station_Number': site_info['siteCode'][0]['value'],
                         'Station_Name': site_info['siteName'],
                         'Latitude': site_info['geoLocation']['geogLocation']['latitude'],
                         'Longitude': site_info['geoLocation']['geogLocation']['longitude'],
-                        'Drainage_Area': next((prop['value'] for prop in site_info['siteProperty'] if prop['name'] == 'drain_area_va'), None)
+                        'Drainage_Area': next((prop['value'] for prop in site_info['siteProperty'] if prop['name'] == 'drain_area_va'), None),
+                        'Unit': unit,
+                        'Parameter_Units': parameter_units
                     })
                 else:
                     print(f"Flow data column not found for station: {station}")
