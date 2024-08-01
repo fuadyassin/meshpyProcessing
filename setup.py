@@ -7,11 +7,19 @@ setup(
     install_requires=[
         'pandas',
         'numpy',
+        'geopandas',
+        'netCDF4',
         'requests',
         'owslib'
     ],
-    description='Python package for extracting and processing hydrometric data.',
+    description='Python package for processing and analyzing hydrological data.',
     author='Fuad Yassin',
     author_email='fuad.yassin@usask.ca',
     url='https://github.com/fuadyassin/meshpyProcessing',
+    classifiers=[
+        'Programming Language :: Python :: 3',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+    ],
+    python_requires='>=3.6',
 )
