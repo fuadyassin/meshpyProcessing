@@ -21,6 +21,7 @@ class GSDESoil:
         self.mesh_intervals = []
         self.lon = []
         self.lat = []
+        self.segid = []
 
     def load_data(self, file_names):
         """
@@ -108,6 +109,7 @@ class GSDESoil:
         db = xs.open_dataset(input_ddb)
         self.lon = db.variables['lon'].values
         self.lat = db.variables['lat'].values
+        self.segid = db.variables['subbasin'].values
         db.close()
 
     def create_netcdf_file(self, ncname, properties, lon, lat, ind):
@@ -121,6 +123,13 @@ class GSDESoil:
             self.nc_filename = os.path.join(temp_dir, f"MESH_parameters_{ncname}.nc")
             rootgrp = nc.Dataset(self.nc_filename, "w", format="NETCDF4")
 
+        # Calculate the indices of the matching COMID values
+        ind = []
+        for i in range(len(self.segid)):
+            fid = np.where(np.int32(self.merged_gdf['COMID'].values) == self.segid[i])[0]
+            ind = np.append(ind, fid)
+        ind = np.int32(ind)
+        
         MaxNumGRUs = 16
         num_soil_lyrs = 4
         subbasin_dim = rootgrp.createDimension("subbasin", len(lon))
