@@ -22,6 +22,7 @@ class GSDESoil:
         self.lon = []
         self.lat = []
         self.segid = []
+        self.num_soil_lyrs = 0
 
     def load_data(self, file_names):
         """
@@ -67,6 +68,7 @@ class GSDESoil:
         Calculate weights for different soil intervals.
         """
         self.mesh_intervals = mesh_intervals
+        self.num_soil_lyrs = len(mesh_intervals)  # Set the number of soil layers based on mesh intervals
         weights_used = []
         for mesh_interval in mesh_intervals:
             start, end = mesh_interval
@@ -112,7 +114,7 @@ class GSDESoil:
         self.segid = db.variables['subbasin'].values
         db.close()
 
-    def create_netcdf_file(self, ncname, properties, lon, lat, ind):
+    def create_netcdf_file(self, ncname, properties):
         """
         Create a NetCDF file with the processed soil data.
         """
@@ -130,11 +132,8 @@ class GSDESoil:
             ind = np.append(ind, fid)
         ind = np.int32(ind)
         
-        MaxNumGRUs = 16
-        num_soil_lyrs = 4
-        subbasin_dim = rootgrp.createDimension("subbasin", len(lon))
-        ngru_dim = rootgrp.createDimension("ngru", MaxNumGRUs)
-        nsol_dim = rootgrp.createDimension("nsol", num_soil_lyrs)
+        subbasin_dim = rootgrp.createDimension("subbasin", len(self.lon))
+        nsol_dim = rootgrp.createDimension("nsol", self.num_soil_lyrs)
 
         lon_var = rootgrp.createVariable("lon", "f4", ("subbasin",), fill_value=-1.0)
         lat_var = rootgrp.createVariable("lat", "f4", ("subbasin",), fill_value=-1.0)
@@ -143,12 +142,13 @@ class GSDESoil:
         lat_var.units = "degrees_north"
         time_var.units = "days since 1980-10-01 00:00:00.0 -0:00"
 
-        lon_var[:] = np.array(lon[ind])
-        lat_var[:] = np.array(lat[ind])
-        time_var[:] = np.zeros(len(lon))
+        lon_var[:] = np.array(self.lon[ind])
+        lat_var[:] = np.array(self.lat[ind])
+        time_var[:] = np.zeros(len(self.lon))
 
+        depth_indices = [str(i+1) for i in range(self.num_soil_lyrs)]
         for prop in properties:
-            for i, depth in enumerate(['1', '2', '3', '4']):
+            for i, depth in enumerate(depth_indices):
                 data_var = rootgrp.createVariable(f'{prop.lower()}{depth}', "f4", ("nsol", "subbasin"), fill_value=-1.0)
                 data_var.long_name = f"{prop} Content of Soil Layer {depth}"
                 data_var[:] = np.array(self.merged_gdf[f'mesh{prop}{depth}'].values[ind])
