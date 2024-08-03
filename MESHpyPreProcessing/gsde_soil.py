@@ -2,18 +2,14 @@ import os
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import netCDF4 as nc
-import xarray as xs
 from functools import reduce
-from datetime import datetime
-import tempfile
+import xarray as xs
 
 class GSDESoil:
-    def __init__(self, directory, input_basin, output_shapefile, nc_filename):
+    def __init__(self, directory, input_basin, output_shapefile):
         self.directory = directory
         self.input_basin = input_basin
         self.output_shapefile = output_shapefile
-        self.nc_filename = nc_filename
         self.file_paths = []
         self.gsde_df = pd.DataFrame()
         self.merged_gdf = gpd.GeoDataFrame()
@@ -113,51 +109,3 @@ class GSDESoil:
         self.lat = db.variables['lat'].values
         self.segid = db.variables['subbasin'].values
         db.close()
-
-    def create_netcdf_file(self, ncname, properties):
-        """
-        Create a NetCDF file with the processed soil data.
-        """
-        try:
-            rootgrp = nc.Dataset(self.nc_filename, "w", format="NETCDF4")
-        except PermissionError:
-            temp_dir = tempfile.gettempdir()
-            self.nc_filename = os.path.join(temp_dir, f"MESH_parameters_{ncname}.nc")
-            rootgrp = nc.Dataset(self.nc_filename, "w", format="NETCDF4")
-
-        # Calculate the indices of the matching COMID values
-        ind = []
-        for i in range(len(self.segid)):
-            fid = np.where(np.int32(self.merged_gdf['COMID'].values) == self.segid[i])[0]
-            ind = np.append(ind, fid)
-        ind = np.int32(ind)
-        
-        subbasin_dim = rootgrp.createDimension("subbasin", len(self.lon))
-        nsol_dim = rootgrp.createDimension("nsol", self.num_soil_lyrs)
-
-        lon_var = rootgrp.createVariable("lon", "f4", ("subbasin",), fill_value=-1.0)
-        lat_var = rootgrp.createVariable("lat", "f4", ("subbasin",), fill_value=-1.0)
-        time_var = rootgrp.createVariable("time", "f4", ("subbasin",), fill_value=-1.0)
-        lon_var.units = "degrees_east"
-        lat_var.units = "degrees_north"
-        time_var.units = "days since 1980-10-01 00:00:00.0 -0:00"
-
-        lon_var[:] = np.array(self.lon[ind])
-        lat_var[:] = np.array(self.lat[ind])
-        time_var[:] = np.zeros(len(self.lon))
-
-        depth_indices = [str(i+1) for i in range(self.num_soil_lyrs)]
-        for prop in properties:
-            for i, depth in enumerate(depth_indices):
-                data_var = rootgrp.createVariable(f'{prop.lower()}{depth}', "f4", ("nsol", "subbasin"), fill_value=-1.0)
-                data_var.long_name = f"{prop} Content of Soil Layer {depth}"
-                data_var[:] = np.array(self.merged_gdf[f'mesh{prop}{depth}'].values[ind])
-
-        rootgrp.Conventions = "CF-1.0"
-        rootgrp.source = "MERIT geogabrics and GSDE soil"
-        rootgrp.institution = "ECCC"
-        rootgrp.references = "xx et al. (xxxx) journal xx:xx-xx"
-        rootgrp.history = f"Fuad Yassin, {datetime.now().strftime('%Y-%m-%d')}"
-        rootgrp.featureType = "point"
-        rootgrp.close()
-
