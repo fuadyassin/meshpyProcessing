@@ -10,6 +10,7 @@ setup(
         'geopandas',
         'netCDF4',
         'requests',
+        'xarray',
         'owslib'
     ],
     description='Python package for processing and analyzing hydrological data.',
