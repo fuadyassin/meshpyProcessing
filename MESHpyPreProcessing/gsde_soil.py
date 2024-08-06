@@ -48,13 +48,35 @@ class GSDESoil:
             new_columns.append(column)
         self.gsde_df.columns = new_columns
 
-    def fill_and_clean_data(self, exclude_cols=['COMID'], exclude_patterns=['OC', 'BD'], max_val=100):
+    def fill_and_clean_data(self, exclude_cols=['COMID'], exclude_patterns=['OC', 'BD', 'BDRICM', 'BDTICM'], max_val=100):):
         """
         Fill and clean data, replacing values greater than max_val with NaN and forward/backward filling.
         """
         for col in self.gsde_df.columns:
-            if col not in exclude_cols and not any(pattern in col for pattern in exclude_patterns):
-                self.gsde_df.loc[self.gsde_df[col] > max_val, col] = np.nan
+            if col not in exclude_cols:
+                if not any(pattern in col for pattern in exclude_patterns):
+                    # Replace values greater than max_val with NaN
+                    self.gsde_df.loc[self.gsde_df[col] > max_val, col] = np.nan
+            
+            # Setting the possible minimum and maximum values for the depth to bedrock.
+            if 'BDRICM' in col:
+                # Replace values of 9999.0 with NaN
+                self.gsde_df.loc[self.gsde_df[col] == 9999.0, col] = np.nan
+                # Convert from cm into meters by dividing the column values by 100.0
+                self.gsde_df[col] = self.gsde_df[col] / 100.0
+                # Cap values greater than 2.0 to 2.0
+                self.gsde_df.loc[self.gsde_df[col] > 2.0, col] = 2.0
+                self.gsde_df.loc[self.gsde_df[col] < 0.1, col] = 0.1
+                
+            if 'BDTICM' in col:
+                # Replace values of 9999.0 with NaN
+                self.gsde_df.loc[self.gsde_df[col] == 9999.0, col] = np.nan
+                # Convert from cm into meters by dividing the column values by 100.0
+                self.gsde_df[col] = self.gsde_df[col] / 100.0
+                # Cap values greater than 4.1 to 4.1
+                self.gsde_df.loc[self.gsde_df[col] > 4.1, col] = 4.1
+                self.gsde_df.loc[self.gsde_df[col] < 0.1, col] = 0.1
+                
         self.gsde_df.sort_values('COMID', inplace=True)
         self.gsde_df.fillna(method='ffill', inplace=True)
         self.gsde_df.fillna(method='bfill', inplace=True)
