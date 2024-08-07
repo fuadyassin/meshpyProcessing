@@ -48,7 +48,7 @@ class GSDESoil:
             new_columns.append(column)
         self.gsde_df.columns = new_columns
 
-    def fill_and_clean_data(self, exclude_cols=['COMID'], exclude_patterns=['OC', 'BD', 'BDRICM', 'BDTICM'], max_val=100):):
+    def fill_and_clean_data(self, exclude_cols=['COMID'], exclude_patterns=['OC', 'BD', 'BDRICM', 'BDTICM'], max_val=100):
         """
         Fill and clean data, replacing values greater than max_val with NaN and forward/backward filling.
         """
