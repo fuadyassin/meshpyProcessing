@@ -1,4 +1,4 @@
-# MESHpyPreProcessing/remap_rdrs_climate_data.py
+# MESHpyPreProcessing/remap_climate_to_ddb.py
 
 import os
 import numpy as np
