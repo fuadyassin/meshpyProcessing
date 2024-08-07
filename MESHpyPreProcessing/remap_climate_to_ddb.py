@@ -6,9 +6,27 @@ import xarray as xs
 import geopandas as gpd
 import glob
 
+# def remap_rdrs_climate_data(input_directory, output_directory, input_basin, input_ddb, start_year, end_year):
+#     # Existing implementation for multiple years 
+#     os.makedirs(output_directory, exist_ok=True)
+#     basin = gpd.read_file(input_basin)
+#     db = xs.open_dataset(input_ddb)
+#     lon = db.variables['lon'].values
+#     lat = db.variables['lat'].values
+#     segid = db.variables['subbasin'].values
+#     db.close()
+
+#     files = []
+#     for year in range(start_year, end_year + 1):
+#         files.extend(glob.glob(os.path.join(input_directory, f"remapped_remapped_ncrb_model_{str(year)}*.nc")))
+
+#     for file_path in files:
+#         process_file(file_path, segid, lon, lat, output_directory)
 def remap_rdrs_climate_data(input_directory, output_directory, input_basin, input_ddb, start_year, end_year):
-    # Existing implementation for multiple years 
+    # Ensure output directory exists
     os.makedirs(output_directory, exist_ok=True)
+
+    # Read basin and drainage database files
     basin = gpd.read_file(input_basin)
     db = xs.open_dataset(input_ddb)
     lon = db.variables['lon'].values
@@ -16,13 +34,24 @@ def remap_rdrs_climate_data(input_directory, output_directory, input_basin, inpu
     segid = db.variables['subbasin'].values
     db.close()
 
+    # Print some basin and database information
+    print("Basin Info:")
+    print(basin.head())  # Print the first few rows of the basin GeoDataFrame
+    print("Longitude:", lon[:5])  # Print the first few longitude values
+    print("Latitude:", lat[:5])  # Print the first few latitude values
+    print("Subbasin IDs:", segid[:5])  # Print the first few subbasin IDs
+
+    # List files based on year range
     files = []
     for year in range(start_year, end_year + 1):
-        files.extend(glob.glob(os.path.join(input_directory, f"remapped_remapped_ncrb_model_{str(year)}*.nc")))
+        year_files = glob.glob(os.path.join(input_directory, f"remapped_remapped_ncrb_model_{str(year)}*.nc"))
+        files.extend(year_files)
+        print(f"Files for year {year}: {year_files}")
 
+    # Process each file
     for file_path in files:
+        print(f"Processing file: {file_path}")
         process_file(file_path, segid, lon, lat, output_directory)
-
 def remap_rdrs_climate_data_single_year(input_directory, output_directory, input_basin, input_ddb, year):
     # Implementation for a single year
     os.makedirs(output_directory, exist_ok=True)
