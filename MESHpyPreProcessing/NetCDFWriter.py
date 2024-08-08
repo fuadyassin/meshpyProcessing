@@ -39,6 +39,13 @@ class NetCDFWriter:
         """
         self.num_soil_lyrs = num_layers
 
+    def add_var_attrs(self, var, attrs):
+        """
+        Add attributes to a variable.
+        """
+        for attr, value in attrs.items():
+            var.setncattr(attr, value)
+
     def write_netcdf(self, properties):
         """
         Create a NetCDF file with the processed soil data.
@@ -66,20 +73,23 @@ class NetCDFWriter:
 
         lon_var = rootgrp.createVariable("lon", "f4", ("subbasin",), fill_value=-1.0)
         lat_var = rootgrp.createVariable("lat", "f4", ("subbasin",), fill_value=-1.0)
-        time_var = rootgrp.createVariable("time", "f4", ("subbasin",), fill_value=-1.0)
-        lon_var.units = "degrees_east"
-        lat_var.units = "degrees_north"
-        time_var.units = "days since 1980-10-01 00:00:00.0 -0:00"
+        time_var = rootgrp.createVariable("time", "f4", ("subbasin",), fill_value=-1.0, units="days since 1980-10-01 00:00:00.0 -0:00")
 
         lon_var[:] = np.array(self.lon[ind])
         lat_var[:] = np.array(self.lat[ind])
         time_var[:] = np.zeros(len(self.lon))
+
+        # Set variable attributes
+        self.add_var_attrs(lon_var, {"standard_name": "longitude", "axis": "X"})
+        self.add_var_attrs(lat_var, {"standard_name": "latitude", "axis": "Y"})
+        self.add_var_attrs(time_var, {"standard_name": "time", "axis": "T"})
 
         # Handle properties tied to number of soil layers
         if 'layer_dependent' in properties:
             for prop in properties['layer_dependent']:
                 data_var = rootgrp.createVariable(f'{prop.lower()}', "f4", ("subbasin", "nsol"), fill_value=-1.0)
                 data_var.long_name = f"{prop} Content of Soil Layer"
+                self.add_var_attrs(data_var, {"standard_name": prop.lower(), "coordinates": "lat lon time"})
                 for i in range(self.num_soil_lyrs):
                     data_var[:, i] = np.array(self.merged_gdf[f'mesh{prop}{i+1}'].values[ind])
 
@@ -88,12 +98,24 @@ class NetCDFWriter:
             for prop in properties['layer_independent']:
                 data_var = rootgrp.createVariable(f'{prop.lower()}', "f4", ("subbasin",), fill_value=-1.0)
                 data_var.long_name = f"{prop} Content per Subbasin"
+                self.add_var_attrs(data_var, {"standard_name": prop.lower(), "coordinates": "lat lon time"})
                 data_var[:] = np.array(self.merged_gdf[prop].values[ind])
 
-        rootgrp.Conventions = "CF-1.0"
-        rootgrp.source = "MERIT geogabrics and GSDE soil"
-        rootgrp.institution = "ECCC"
-        rootgrp.references = "xx et al. (xxxx) journal xx:xx-xx"
-        rootgrp.history = f"Fuad Yassin, {datetime.now().strftime('%Y-%m-%d')}"
-        rootgrp.featureType = "point"
+        # Global attributes
+        rootgrp.setncattr("Conventions", "CF-1.0")
+        rootgrp.setncattr("source", "MERIT geogabrics and GSDE soil")
+        rootgrp.setncattr("institution", "ECCC")
+        rootgrp.setncattr("references", "xx et al. (xxxx) journal xx:xx-xx")
+        rootgrp.setncattr("history", f"Fuad Yassin, {datetime.now().strftime('%Y-%m-%d')}")
+        rootgrp.setncattr("featureType", "point")
+
+        # CRS variable
+        proj = rootgrp.createVariable("crs", "i4", ())
+        self.add_var_attrs(proj, {
+            "grid_mapping_name": "latitude_longitude",
+            "longitude_of_prime_meridian": 0,
+            "semi_major_axis": 6378137.0,
+            "inverse_flattening": 298.257223563
+        })
+
         rootgrp.close()
