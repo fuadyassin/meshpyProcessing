@@ -79,8 +79,8 @@ class NetCDFWriter:
         lat_var.units = "degrees_north"
         time_var.units = "days since 1980-10-01 00:00:00.0 -0:00"
 
-        lon_var[:] = np.array(self.lon[ind])
-        lat_var[:] = np.array(self.lat[ind])
+        lon_var[:] = np.array(self.lon)
+        lat_var[:] = np.array(self.lat)
         time_var[:] = np.zeros(len(self.lon))
 
         # Set variable attributes
