@@ -73,7 +73,11 @@ class NetCDFWriter:
 
         lon_var = rootgrp.createVariable("lon", "f4", ("subbasin",), fill_value=-1.0)
         lat_var = rootgrp.createVariable("lat", "f4", ("subbasin",), fill_value=-1.0)
-        time_var = rootgrp.createVariable("time", "f4", ("subbasin",), fill_value=-1.0, units="days since 1980-10-01 00:00:00.0 -0:00")
+        time_var = rootgrp.createVariable("time", "f4", ("subbasin",), fill_value=-1.0)
+
+        lon_var.units = "degrees_east"
+        lat_var.units = "degrees_north"
+        time_var.units = "days since 1980-10-01 00:00:00.0 -0:00"
 
         lon_var[:] = np.array(self.lon[ind])
         lat_var[:] = np.array(self.lat[ind])
