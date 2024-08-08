@@ -46,13 +46,16 @@ class NetCDFWriter:
         for attr, value in attrs.items():
             var.setncattr(attr, value)
 
-    def write_netcdf(self, properties):
+    def write_netcdf(self, properties, variable_info):
         """
         Create a NetCDF file with the processed soil data.
         properties: dict
             A dictionary with two keys:
             - 'layer_dependent': List of property names tied to the number of soil layers.
             - 'layer_independent': List of property names dependent only on the subbasin.
+        variable_info: dict
+            A dictionary with keys as property names and values as tuples containing 
+            (new variable name in NetCDF, data type code).
         """
         try:
             rootgrp = nc.Dataset(self.nc_filename, "w", format="NETCDF4")
@@ -84,14 +87,15 @@ class NetCDFWriter:
         time_var[:] = np.zeros(len(self.lon))
 
         # Set variable attributes
-        self.add_var_attrs(lon_var, {"standard_name": "longitude", "axis": "X"})
-        self.add_var_attrs(lat_var, {"standard_name": "latitude", "axis": "Y"})
-        self.add_var_attrs(time_var, {"standard_name": "time", "axis": "T"})
+        self.add_var_attrs(lon_var, {"standard_name": "longitude", "axis": "X", "grid_mapping": "crs"})
+        self.add_var_attrs(lat_var, {"standard_name": "latitude", "axis": "Y", "grid_mapping": "crs"})
+        self.add_var_attrs(time_var, {"standard_name": "time", "axis": "T", "grid_mapping": "crs"})
 
         # Handle properties tied to number of soil layers
         if 'layer_dependent' in properties:
             for prop in properties['layer_dependent']:
-                data_var = rootgrp.createVariable(f'{prop.lower()}', "f4", ("subbasin", "nsol"), fill_value=-1.0)
+                new_name, dtype = variable_info[prop]
+                data_var = rootgrp.createVariable(new_name, dtype, ("subbasin", "nsol"), fill_value=-1.0)
                 data_var.long_name = f"{prop} Content of Soil Layer"
                 self.add_var_attrs(data_var, {"grid_mapping": "crs", "standard_name": prop.lower(), "coordinates": "lat lon time"})
                 for i in range(self.num_soil_lyrs):
@@ -100,7 +104,8 @@ class NetCDFWriter:
         # Handle properties dependent only on subbasin
         if 'layer_independent' in properties:
             for prop in properties['layer_independent']:
-                data_var = rootgrp.createVariable(f'{prop.lower()}', "f4", ("subbasin",), fill_value=-1.0)
+                new_name, dtype = variable_info[prop]
+                data_var = rootgrp.createVariable(new_name, dtype, ("subbasin",), fill_value=-1.0)
                 data_var.long_name = f"{prop} Content per Subbasin"
                 self.add_var_attrs(data_var, {"grid_mapping": "crs", "standard_name": prop.lower(), "coordinates": "lat lon time"})
                 data_var[:] = np.array(self.merged_gdf[prop].values[ind])
