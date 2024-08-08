@@ -77,12 +77,11 @@ class NetCDFWriter:
 
         # Handle properties tied to number of soil layers
         if 'layer_dependent' in properties:
-            depth_indices = [str(i+1) for i in range(self.num_soil_lyrs)]
             for prop in properties['layer_dependent']:
-                for i, depth in enumerate(depth_indices):
-                    data_var = rootgrp.createVariable(f'{prop.lower()}{depth}', "f4", ("nsol", "subbasin"), fill_value=-1.0)
-                    data_var.long_name = f"{prop} Content of Soil Layer {depth}"
-                    data_var[:] = np.array(self.merged_gdf[f'mesh{prop}{depth}'].values[ind])
+                data_var = rootgrp.createVariable(f'{prop.lower()}', "f4", ("subbasin", "nsol"), fill_value=-1.0)
+                data_var.long_name = f"{prop} Content of Soil Layer"
+                for i in range(self.num_soil_lyrs):
+                    data_var[:, i] = np.array(self.merged_gdf[f'mesh{prop}{i+1}'].values[ind])
 
         # Handle properties dependent only on subbasin
         if 'layer_independent' in properties:
