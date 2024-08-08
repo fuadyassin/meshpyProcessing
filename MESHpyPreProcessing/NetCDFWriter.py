@@ -93,7 +93,7 @@ class NetCDFWriter:
             for prop in properties['layer_dependent']:
                 data_var = rootgrp.createVariable(f'{prop.lower()}', "f4", ("subbasin", "nsol"), fill_value=-1.0)
                 data_var.long_name = f"{prop} Content of Soil Layer"
-                self.add_var_attrs(data_var, {"standard_name": prop.lower(), "coordinates": "lat lon time"})
+                self.add_var_attrs(data_var, {"grid_mapping": "crs", "standard_name": prop.lower(), "coordinates": "lat lon time"})
                 for i in range(self.num_soil_lyrs):
                     data_var[:, i] = np.array(self.merged_gdf[f'mesh{prop}{i+1}'].values[ind])
 
@@ -102,7 +102,7 @@ class NetCDFWriter:
             for prop in properties['layer_independent']:
                 data_var = rootgrp.createVariable(f'{prop.lower()}', "f4", ("subbasin",), fill_value=-1.0)
                 data_var.long_name = f"{prop} Content per Subbasin"
-                self.add_var_attrs(data_var, {"standard_name": prop.lower(), "coordinates": "lat lon time"})
+                self.add_var_attrs(data_var, {"grid_mapping": "crs", "standard_name": prop.lower(), "coordinates": "lat lon time"})
                 data_var[:] = np.array(self.merged_gdf[prop].values[ind])
 
         # Global attributes
