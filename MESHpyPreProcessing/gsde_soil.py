@@ -96,6 +96,9 @@ class GSDESoil:
             def fill_and_clean_data(self, exclude_cols=['COMID'], exclude_patterns=['OC', 'BD', 'BDRICM', 'BDTICM'], max_val=100):
                 for col in self.gsde_df.columns:
                     if col not in exclude_cols:
+                        if 'OC' in col:
+                            self.gsde_df.loc[self.gsde_df[col]*1.72*0.01 > max_val, col] = np.nan                
+                    if col not in exclude_cols:
                         if not any(pattern in col for pattern in exclude_patterns):
                             self.gsde_df.loc[self.gsde_df[col] > max_val, col] = np.nan
                 
