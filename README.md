@@ -9,6 +9,7 @@ You can install the package using pip:
 ```bash
 pip install git+https://github.com/fuadyassin/meshpyProcessing.git
 
+## Streamflow file preparation
 
 from MESHpyPreProcessing.gen_streamflow_file import GenStreamflowFile
 gen_flow = GenStreamflowFile()
