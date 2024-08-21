@@ -21,6 +21,7 @@ def flag_ncaalg(
     and hydrological analyses.
 
     Parameters
+    ----------
     gdf1 : gpd.GeoDataFrame
         The first GeoDataFrame.
     gdf2 : gpd.GeoDataFrame
@@ -66,3 +67,40 @@ def flag_ncaalg(
         gdf1.to_file(output_path)
     
     return gdf1
+
+def flag_ncaalg_from_files(
+    shapefile1: str,
+    shapefile2: str,
+    threshold: float = 0.1,  # Threshold set to 10% by default
+    output_path: str = None
+) -> gpd.GeoDataFrame:
+    """
+    Read two shapefiles, set their CRS to EPSG:4326, and apply the `flag_ncaalg` function.
+
+    Parameters
+    ----------
+    shapefile1 : str
+        Path to the first shapefile.
+    shapefile2 : str
+        Path to the second shapefile.
+    threshold : float, optional
+        The threshold for considering an intersection significant, as a fraction of
+        the first GeoDataFrame's polygon area (default is 0.1 for 10%).
+    output_path : str, optional
+        Path where the modified first GeoDataFrame should be saved. If None, the file is not saved.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        The modified GeoDataFrame of the first GeoDataFrame with the 'ncontr' column added.
+    """
+    # Read the shapefiles into GeoDataFrames
+    gdf1 = gpd.read_file(shapefile1)
+    gdf2 = gpd.read_file(shapefile2)
+
+    # Set the CRS to EPSG:4326 in place
+    gdf1.to_crs(epsg=4326, inplace=True)
+    gdf2.to_crs(epsg=4326, inplace=True)
+
+    # Call the original flag_ncaalg function
+    return flag_ncaalg(gdf1, gdf2, threshold, output_path)
