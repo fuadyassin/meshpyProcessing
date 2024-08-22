@@ -102,5 +102,5 @@ def flag_ncaalg_from_files(
     gdf1.to_crs(epsg=4326, inplace=True)
     gdf2.to_crs(epsg=4326, inplace=True)
 
-    # Call the original flag_ncaalg function
+    # Call the original flag_ncaalg function and will return the output of the original fun
     return flag_ncaalg(gdf1, gdf2, threshold, output_path)
