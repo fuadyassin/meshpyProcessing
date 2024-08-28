@@ -87,12 +87,12 @@ def plot_grus_ddb(output_basin_path, ddbnetcdf_path, save_path='landuse_gru_plot
 
         # Convert title to two lines
         title = split_title(col)
-        ax.set_title(title, fontsize=12, ha='center')
+        ax.set_title(title, fontsize=10, ha='center')
         ax.set_xticks([])
         ax.set_yticks([])
 
         # Display the pre-calculated percentage with a percentage sign in the top left corner of the subplot
-        ax.text(0.05, 0.95, f"{rounded_percentage}%", transform=ax.transAxes, fontsize=12,
+        ax.text(0.05, 0.95, f"{rounded_percentage}%", transform=ax.transAxes, fontsize=10,
                 verticalalignment='top', bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.5))
 
     # Hide any unused subplots
