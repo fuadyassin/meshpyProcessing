@@ -77,6 +77,7 @@ class NetCDFWriter:
         lon_var = rootgrp.createVariable("lon", "f4", ("subbasin",), fill_value=-1.0)
         lat_var = rootgrp.createVariable("lat", "f4", ("subbasin",), fill_value=-1.0)
         time_var = rootgrp.createVariable("time", "f4", ("subbasin",), fill_value=-1.0)
+        subbasin_var = rootgrp.createVariable("subbasin", "i4", ("subbasin",))
 
         lon_var.units = "degrees_east"
         lat_var.units = "degrees_north"
@@ -85,11 +86,13 @@ class NetCDFWriter:
         lon_var[:] = np.array(self.lon)
         lat_var[:] = np.array(self.lat)
         time_var[:] = np.zeros(len(self.lon))
+        subbasin_var[:] = np.array(self.segid, dtype=np.int32)
 
         # Set variable attributes
         self.add_var_attrs(lon_var, {"standard_name": "longitude", "axis": "X", "grid_mapping": "crs"})
         self.add_var_attrs(lat_var, {"standard_name": "latitude", "axis": "Y", "grid_mapping": "crs"})
         self.add_var_attrs(time_var, {"standard_name": "time", "axis": "T", "grid_mapping": "crs"})
+        self.add_var_attrs(subbasin_var, {"standard_name": "subbasin_id", "long_name": "Subbasin ID"})
 
         # Handle properties tied to number of soil layers
         if 'layer_dependent' in properties:
