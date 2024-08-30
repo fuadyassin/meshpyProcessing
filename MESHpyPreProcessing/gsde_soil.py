@@ -55,7 +55,7 @@ class GSDESoil:
             if suffix_dict and file_name in suffix_dict:
                 suffix = suffix_dict[file_name]
                 if suffix:  # Only apply if the suffix is not an empty string
-                    df.columns = [f"{col}_{suffix}" if col != key else col for col in df.columns]
+                    df.columns = [f"{col}{suffix}" if col != key else col for col in df.columns]
             
             dfs.append(df)
         
