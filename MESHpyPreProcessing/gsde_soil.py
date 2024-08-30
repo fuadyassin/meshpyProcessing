@@ -20,25 +20,25 @@ class GSDESoil:
         self.segid = []
         self.num_soil_lyrs = 0
 
-    def load_data(self, file_names, search_replace_dict=None, suffix_list=None):
+    def load_data(self, file_names, search_replace_dict=None, suffix_dict=None):
         """
         Load data from multiple CSV files, apply renaming/suffixing, and merge into a single DataFrame.
         Parameters:
             - file_names: List of CSV file names to be loaded.
             - search_replace_dict: Dictionary with file name as key and (search_list, replace_list) tuple as value.
-            - suffix_list: List of suffixes to be appended to column names for each file.
+            - suffix_dict: Dictionary with file name as key and suffix as value.
         """
         self.file_paths = [os.path.join(self.directory, filename) for filename in file_names]
-        self.gsde_df = self.load_and_merge_files(self.file_paths, search_replace_dict, suffix_list)
+        self.gsde_df = self.load_and_merge_files(self.file_paths, search_replace_dict, suffix_dict)
 
     @staticmethod
-    def load_and_merge_files(file_list, search_replace_dict=None, suffix_list=None, key='COMID'):
+    def load_and_merge_files(file_list, search_replace_dict=None, suffix_dict=None, key='COMID'):
         """
         Load and merge multiple CSV files on the specified key.
         Apply renaming/suffixing during the reading of each file.
         """
         dfs = []
-        for i, fp in enumerate(file_list):
+        for fp in file_list:
             df = pd.read_csv(fp)
             file_name = os.path.basename(fp)
             
@@ -52,9 +52,10 @@ class GSDESoil:
             df.columns = [col.replace('.', '') for col in df.columns]
             
             # Optionally append a suffix to the column names
-            if suffix_list and suffix_list[i]:
-                suffix = suffix_list[i]
-                df.columns = [f"{col}_{suffix}" if col != key else col for col in df.columns]
+            if suffix_dict and file_name in suffix_dict:
+                suffix = suffix_dict[file_name]
+                if suffix:  # Only apply if the suffix is not an empty string
+                    df.columns = [f"{col}_{suffix}" if col != key else col for col in df.columns]
             
             dfs.append(df)
         
