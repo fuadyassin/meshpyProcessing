@@ -113,7 +113,7 @@ class GenStreamflowFile:
                 data_list = [
                     {
                         'Date': feature['properties']['DATE'],
-                        'value': feature['properties']['DISCHARGE'] if feature['properties']['DISCHARGE'] is not None else -1000
+                        'value': feature['properties']['DISCHARGE'] if feature['properties']['DISCHARGE'] is not None else -1
                     }
                     for feature in full_data
                 ]
